@@ -1,6 +1,6 @@
 # qt6printers
 
-helper.py kde.py qt.py文件是从kde的KDevelop的开源项目中获取
+helper.py qt.py文件是从kde的KDevelop的开源项目中获取
 
 https://github.com/KDE/kdevelop/tree/master/plugins/gdb/printers
 
