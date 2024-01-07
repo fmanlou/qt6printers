@@ -11,6 +11,7 @@ import re
 import time
 
 from helper import *
+from gdbbridge import *
 
 class QStringPrinter:
 
