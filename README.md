@@ -10,3 +10,7 @@ https://github.com/KDE/kdevelop/tree/master/plugins/gdb/printers
 cp install/.gdb ~ -r
 cp install/.gdbinit ~
 ```
+
+## 参考资料
+https://github.com/qt-creator/qt-creator/tree/master/share/qtcreator/debugger
+/usr/share/gcc/python/libstdcxx/
