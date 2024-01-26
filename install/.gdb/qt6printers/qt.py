@@ -11,12 +11,14 @@ import re
 import time
 
 from helper import *
-from gdbbridge import *
+from utils import *
+from printers import *
 
 class QStringPrinter:
 
     def __init__(self, val):
         self.val = val
+        self.isQt6 = qtUtils.isQt6()
 
     def to_string(self):
         ret = ""
@@ -29,10 +31,9 @@ class QStringPrinter:
             if size == 0:
                 return ret
             isQt4 = has_field(self.val['d'], 'data') # Qt4 has d->data, Qt5 doesn't.
-            isQt6 = has_field(self.val['d'], 'ptr') # Qt6 has d->ptr, Qt5 doesn't.
             if isQt4:
                 dataAsCharPointer = self.val['d']['data'].cast(gdb.lookup_type("char").pointer())
-            elif isQt6:
+            elif self.isQt6:
                 dataAsCharPointer = self.val['d']['ptr'].cast(gdb.lookup_type("char").pointer())
             else:
                 dataAsCharPointer = (self.val['d'] + 1).cast(gdb.lookup_type("char").pointer())
@@ -96,6 +97,7 @@ class QListPrinter:
             self.nodetype = nodetype
             self.d = d
             self.count = 0
+            self.isQt6 = qtUtils.isQt6()
 
             #from QTypeInfo::isLarge
             isLarge = self.nodetype.sizeof > gdb.lookup_type('void').pointer().sizeof
@@ -124,8 +126,7 @@ class QListPrinter:
             return self
 
         def __next__(self):
-            isQt6 = has_field(self.d, 'size')
-            if isQt6:
+            if self.isQt6:
                 size = self.d['size']
             else:
                 size = self.d['end'] - self.d['begin']
@@ -134,7 +135,7 @@ class QListPrinter:
                 raise StopIteration
             count = self.count
 
-            if isQt6:
+            if self.isQt6:
                 value = self.d['ptr'] + count
             else:
                 array = self.d['array'].address + self.d['begin'] + count
@@ -361,19 +362,28 @@ class QMapPrinter:
     def __init__(self, val, container):
         self.val = val
         self.container = container
+        self.isQt6 = qtUtils.isQt6()
 
     def children(self):
-        if self.val['d']['size'] == 0:
+        if self.isQt6 == False and self.val['d']['size'] == 0:
             return []
 
         isQt4 = has_field(self.val, 'e') # Qt4 has 'e', Qt5 doesn't
         if isQt4:
             return self._iteratorQt4(self.val)
+        elif self.isQt6:
+            stdMap = self.val['d']['d']['m']
+            node = lookup_node_type('_Rb_tree_node', stdMap.type).pointer()
+            return StdMapPrinter._iter (RbtreeIterator (stdMap), node)
         else:
             return self._iteratorQt5(self.val)
 
     def to_string(self):
-        size = self.val['d']['size']
+        if self.isQt6:
+            size = len(RbtreeIterator (self.val['d']['d']['m']))
+            return str(StdMapPrinter("map",self.val['d']['d']['m']))
+        else:
+            size = self.val['d']['size']
 
         return "%s<%s, %s> (size = %s)" % ( self.container, self.val.type.template_argument(0), self.val.type.template_argument(1), size )
 
@@ -703,21 +713,27 @@ class QVariantPrinter:
 
     def __init__(self, val):
         self.val = val
+        self.isQt6 = qtUtils.isQt6()
 
     def to_string(self):
         d = self.val['d']
 
         if d['is_null']:
             return "QVariant(NULL)"
-
-        data_type = d['type']
-        type_str = ("type = %d" % data_type)
-        try:
-            typeAsCharPointer = (gdb.parse_and_eval("QVariant::typeToName(%d)" % data_type).cast(gdb.lookup_type("char").pointer()))
-            if typeAsCharPointer:
-                type_str = typeAsCharPointer.string(encoding = 'UTF-8')
-        except Exception as e:
-            pass
+        
+        if self.isQt6:
+            eval_string = "(*("+str(self.val.type)+"*)("+str(self.val.address)+")).typeName()"
+            typeAsCharPointer = gdb.parse_and_eval(eval_string).cast(gdb.lookup_type("char").pointer())
+            type_str = typeAsCharPointer.string(encoding = 'UTF-8')
+        else:
+            data_type = d['type']
+            type_str = ("type = %d" % data_type)
+            try:
+                typeAsCharPointer = (gdb.parse_and_eval("QVariant::typeToName(%d)" % data_type).cast(gdb.lookup_type("char").pointer()))
+                if typeAsCharPointer:
+                    type_str = typeAsCharPointer.string(encoding = 'UTF-8')
+            except Exception as e:
+                pass
 
         data = d['data']
         is_shared = d['is_shared']
@@ -734,12 +750,20 @@ class QVariantPrinter:
             except Exception as e:
                 value_str = str(data['ptr'])
             if type_obj:
-                if type_obj.sizeof > type_obj.pointer().sizeof:
-                    value_ptr = data['ptr'].reinterpret_cast(type_obj.const().pointer())
-                    value_str = str(value_ptr.dereference())
-                else: 
-                    value_ptr = data['c'].address.reinterpret_cast(type_obj.const().pointer())
-                    value_str = str(value_ptr.dereference())
+                if self.isQt6:
+                    if type_obj.sizeof > type_obj.pointer().sizeof:
+                        value_ptr = data['data'].reinterpret_cast(type_obj.const().pointer())
+                        value_str = str(value_ptr.dereference())
+                    else: 
+                        value_ptr = data['data'].address.reinterpret_cast(type_obj.const().pointer())
+                        value_str = str(value_ptr.dereference())
+                else:
+                    if type_obj.sizeof > type_obj.pointer().sizeof:
+                        value_ptr = data['ptr'].reinterpret_cast(type_obj.const().pointer())
+                        value_str = str(value_ptr.dereference())
+                    else:
+                        value_ptr = data['c'].address.reinterpret_cast(type_obj.const().pointer())
+                        value_str = str(value_ptr.dereference())
 
         return "QVariant(%s, %s)" % (type_str, value_str)
 

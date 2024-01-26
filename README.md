@@ -11,6 +11,14 @@ cp install/.gdb ~ -r
 cp install/.gdbinit ~
 ```
 
+## 支持数据类型
+- QMap
+- QString
+- QVariant
+
+## 验证环境
+Ubuntu 22.04 g++-11
+
 ## 参考资料
 https://github.com/qt-creator/qt-creator/tree/master/share/qtcreator/debugger
 /usr/share/gcc/python/libstdcxx/
