@@ -12,13 +12,27 @@ cp install/.gdbinit ~
 ```
 
 ## 支持数据类型
-- QMap
-- QString
-- QVariant
-- QJsonObject
-- QJsonArray
-- QList
-- QVector
+- [x] QVector
+- [x] QList
+- [ ] QStack
+- [x] QQueue
+- [x] QMap
+- [x] QMultiMap
+- [x] QHash
+- [ ] QMultiHash
+- [ ] QSet
+- [x] QString
+- [x] QStringList
+- [x] QByteArray
+- [x] QVariant
+- [x] QDate
+- [x] QTime
+- [x] QDateTime
+- [x] QUrl
+- [x] QUuid
+- [ ] QCache
+- [ ] QJsonObject
+- [x] QJsonArray
 
 ## 验证环境
 Ubuntu 22.04 g++-11
