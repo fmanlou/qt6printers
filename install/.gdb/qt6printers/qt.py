@@ -767,6 +767,38 @@ class QVariantPrinter:
 
         return "QVariant(%s, %s)" % (type_str, value_str)
 
+class QJsonObjectPrinter:
+    """Print a QJsonObject"""
+
+    def __init__(self, val):
+        # delegate everything to map
+        self.printer = QMapPrinter(gdb.parse_and_eval('((QJsonObject*){:})->toVariantMap()'.format(int(val.address))), 'QMap')
+
+    def children(self):
+        return self.printer.children()
+
+    def to_string(self):
+        return self.printer.to_string()
+
+    def display_hint(self):
+        return 'map'
+
+class QJsonArrayPrinter:
+    """Print a QJsonArray"""
+
+    def __init__(self, val):
+        # delegate everything to list
+        self.printer = QListPrinter(gdb.parse_and_eval('((QJsonArray*){:})->toVariantList()'.format(int(val.address))), 'QList', 'QVariant')
+
+    def children(self):
+        return self.printer.children()
+
+    def to_string(self):
+        return self.printer.to_string()
+
+    def display_hint(self):
+        return 'array'
+
 pretty_printers_dict = {}
 
 def register_qt_printers (obj):
@@ -796,6 +828,8 @@ def build_dictionary ():
     pretty_printers_dict[re.compile('^QChar$')] = lambda val: QCharPrinter(val)
     pretty_printers_dict[re.compile('^QUuid')] = lambda val: QUuidPrinter(val)
     pretty_printers_dict[re.compile('^QVariant')] = lambda val: QVariantPrinter(val)
+    pretty_printers_dict[re.compile('^QJsonObject$')] = lambda val: QJsonObjectPrinter(val)
+    pretty_printers_dict[re.compile('^QJsonArray')] = lambda val: QJsonArrayPrinter(val)
 
 
 build_dictionary ()
