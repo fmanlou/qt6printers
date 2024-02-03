@@ -15,6 +15,10 @@ cp install/.gdbinit ~
 - QMap
 - QString
 - QVariant
+- QJsonObject
+- QJsonArray
+- QList
+- QVector
 
 ## 验证环境
 Ubuntu 22.04 g++-11
