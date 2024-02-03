@@ -31,7 +31,7 @@ cp install/.gdbinit ~
 - [x] QUrl
 - [x] QUuid
 - [ ] QCache
-- [ ] QJsonObject
+- [x] QJsonObject（有点问题）
 - [x] QJsonArray
 
 ## 验证环境

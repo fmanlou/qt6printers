@@ -106,6 +106,7 @@ void testQJsonObject() {
   QJsonObject obj;
 
   obj.insert("key", "1");
+  auto map = obj.toVariantMap();
 }
 
 void testQJsonArray() {
