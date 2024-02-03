@@ -22,4 +22,6 @@ Ubuntu 22.04 g++-11
 ## 参考资料
 https://github.com/qt-creator/qt-creator/tree/master/share/qtcreator/debugger
 
+https://github.com/Lekensteyn/qt5printers
+
 /usr/share/gcc/python/libstdcxx/
