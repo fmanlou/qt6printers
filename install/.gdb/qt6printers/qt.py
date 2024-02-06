@@ -11,7 +11,7 @@ import re
 import time
 
 from helper import *
-from utils import *
+from tools import *
 from printers import *
 
 class QStringPrinter:
